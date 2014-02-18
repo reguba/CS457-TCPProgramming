@@ -1,26 +1,38 @@
-from socket import *
+import socket, select, string, sys
  
-if __name__ == '__main__':
+def prompt():
+	sys.stdout.write('<You> ')
+	sys.stdout.flush()
+	
+	
+	
+host = ''
+port = 5002
  
-	host = 'localhost'
-	port = 55567
-	buf = 1024
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.settimeout(2)
+
+try:
+	s.connect((host,port))
+except:
+	print 'Unable to connect'
+	sys.exit()
  
-	addr = (host, port)
- 
-	clientsocket = socket(AF_INET, SOCK_STREAM)
- 
-	clientsocket.connect(addr)
- 
-	while 1:
-		data = raw_input(">> ")
-		if not data:
-			break
-		else:
-			clientsocket.send(data)
-			data = clientsocket.recv(buf)
+print 'Connect to Server. Start sending messages.'
+
+while 1:
+	s_list = [sys.stdin, s]
+	inRdy, outRdy, errRdy = select.select(s_list, [], [])
+	
+	for sock in inRdy:
+		if sock == s:
+			data = s.recv(1024)
 			if not data:
-				break
+				print '\nDisconnected from server'
+				sys.exit()
 			else:
-				print data
-	clientsocket.close()
+				sys.stdout.write(data)
+		else:
+			msg = sys.stdin.readline()
+			s.send(msg)
+	
