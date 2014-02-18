@@ -3,7 +3,7 @@ package server;
 import java.io.InputStream;
 import java.net.Socket;
 
-public class Receiver implements Runnable {
+public class Receiver extends Thread {
 	
 	private String id;
 	private InputStream receiveSocket;

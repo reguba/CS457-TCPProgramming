@@ -3,7 +3,7 @@ package server;
 import java.io.OutputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Sender implements Runnable {
+public class Sender extends Thread {
 	
 	private String id;
 	private OutputStream sendSocket;
@@ -20,7 +20,7 @@ public class Sender implements Runnable {
 		
 	}
 	
-	public String getID()	{
+	public String getClientId()	{
 		return id;
 	}
 	
