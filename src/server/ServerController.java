@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import utils.Utils;
@@ -25,7 +26,7 @@ public class ServerController {
 	private static final int PORT = 9876;
 	
 	private static ArrayList<Sender> senders;
-	private static ArrayList<String> groups;
+	private static HashMap<String, ArrayList<Sender>> groups;
 	
 	private static ServerSocket listenSocket;
 	
@@ -102,7 +103,7 @@ public class ServerController {
 	 */
 	private static boolean isValidId(String id)	{
 		
-		if(Utils.isNullOrEmptyString(id) || getClient(id) != null) {
+		if(Utils.isNullOrEmptyString(id) || getSenderById(id) != null) {
 			return false;
 		}
 		
@@ -125,6 +126,13 @@ public class ServerController {
 		}
 	}
 	
+	/**
+	 * Creates and starts a sender thread for the client
+	 * with the specified id.
+	 * @param id The id of the client this sender thread is associated with.
+	 * @param socket The socket on which the client is connected.
+	 * @throws IOException When an I/O error occurs on the socket
+	 */
 	private static void createSender(String id, Socket socket) throws IOException {
 		
 		Sender sender = new Sender(id, socket.getOutputStream());
@@ -132,13 +140,24 @@ public class ServerController {
 		senders.add(sender);
 	}
 	
+	/**
+	 * Creates and starts a receiver thread for the client
+	 * with the specified id.
+	 * @param id The id of the client this receiver thread is associated with.
+	 * @param socket The socket on which the client is connected.
+	 * @throws IOException When an I/O error occurs on the socket
+	 */
 	private static void createReceiver(String id, Socket socket) throws IOException {
 		
 		Receiver receiver = new Receiver(id, socket.getInputStream());
 		receiver.start();
 	}
 	
-	private static Sender getClient(String id) {
+	/**
+	 * Returns the sender with the specified id
+	 * or null if no client with that id exists.
+	 */
+	private static Sender getSenderById(String id) {
 		
 		Iterator<Sender> clients = senders.iterator();
 		
@@ -153,24 +172,126 @@ public class ServerController {
 		return null;
 	}
 	
-	private static synchronized void sendMessage(String receiverId, String Message) {
-				
+	/**
+	 * Sends the given message to the client specified by
+	 * the receiverId.
+	 * @param senderId The id of the client sending the message.
+	 * @param receiverId The id of the client to receive the message.
+	 * @param Message The message being sent.
+	 */
+	private static void sendMessage(String senderId, String receiverId, String message) {
+		
+		getSenderById(receiverId).queueMessageToSend(senderId, message);
 	}
 	
-	public static synchronized void sendGroupMessage(String groupName, String message) {
-		//TODO implement
+	/**
+	 * Sends the given message to the client specified by
+	 * the receiverId.
+	 * @param senderId The id of the client sending the message.
+	 * @param receiverId The id of the client to receive the message.
+	 * @param message The message being sent.
+	 */
+	public static void sendPrivateMessage(String senderId, String receiverId, String message) {
+		
+		sendMessage(senderId, receiverId, message);
+		sendMessage(senderId, senderId, message); //Sent messages should always be echo'ed back to sender
 	}
 	
-	public static synchronized void broadcastMessage(String senderId, String message) {
-		//TODO implement
+	/**
+	 * Sends the given message to all clients in the group specified
+	 * by groupName.
+	 * @param senderId The id of the client sending the message.
+	 * @param groupName The name of the group to which this message is being sent.
+	 * @param message The message being sent.
+	 */
+	public static void sendGroupMessage(String senderId, String groupName, String message) {
+		
+		Iterator<ArrayList<Sender>> grps = groups.values().iterator();
+		
+		while(grps.hasNext()) {
+			Iterator<Sender> clients = grps.next().iterator();
+			
+			while(clients.hasNext()) {
+				sendMessage(senderId, clients.next().getClientId(), message);
+			}
+		}
 	}
 	
-	public static synchronized void sendPrivateMessage(String senderId, String receiverId, String message) {
-		//TODO implement
+	/**
+	 * Sends a message to all clients on the server.
+	 * @param senderId The id of the client sending the message.
+	 * @param message The message being sent.
+	 */
+	public static void broadcastMessage(String senderId, String message) {
+		
+		Iterator<Sender> clients = senders.iterator();
+		
+		while(clients.hasNext()) { //Echos back to sender as well
+			sendMessage(senderId, clients.next().getClientId(), message);
+		}
 	}
 	
+	/**
+	 * Returns the number of clients currently connected.
+	 */
 	public static int getNumberOfClients() {
-		//TODO Have it return actual values
-		return -1;
+		
+		return senders.size();
+	}
+	
+	/**
+	 * Creates a new group by the specified name if
+	 * one does not already exist.
+	 */
+	public static synchronized void createGroup(String groupName) {
+		
+		if(getGroup(groupName) == null) { //If group exists, do nothing
+			groups.put(groupName, new ArrayList<Sender>());
+		}
+	}
+	
+	/**
+	 * Returns an ArrayList of all Senders in the specified
+	 * group.
+	 */
+	private static ArrayList<Sender> getGroup(String groupName) {
+		
+		return groups.get(groupName);
+	}
+	
+	/**
+	 * Add the client specified to the group specified.
+	 * @param clientId The id of the client to add to the group.
+	 * @param groupName The name of the group to add the client to.
+	 */
+	public static synchronized void joinGroup(String clientId, String groupName) {
+		
+		ArrayList<Sender> group = getGroup(groupName);
+		
+		if(group == null) { //If group doesn't exist, create it
+			createGroup(groupName);
+		}
+		
+		getGroup(groupName).add(getSenderById(clientId));
+	}
+	
+	//TODO getClientsIds should take a group name
+	//     to support getting clients in a specific
+	//     group. Getting all ids on the server will
+	//     just iterate over all groups.
+	/**
+	 * Returns and ArrayList containing the ids of all
+	 * clients currently connected.
+	 */
+	public static ArrayList<String> getClientIds() {
+		
+		Iterator<Sender> clients = senders.iterator();
+		ArrayList<String> ids = new ArrayList<String>();
+		
+		while(clients.hasNext()) {
+			ids.add(clients.next().getClientId());
+		}
+		
+		return ids;
 	}
 }
