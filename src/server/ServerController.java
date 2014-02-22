@@ -35,7 +35,7 @@ public class ServerController {
 		//Ensure the controller can shutdown properly
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 	        public void run() {
-	            System.out.println("Shutting down...");
+	            displayMessage("Shutting down...");
 	            shutDown();
 	        }
 	    }, "Shutdown-thread"));
@@ -44,35 +44,46 @@ public class ServerController {
 			listenSocket = new ServerSocket(PORT);
 			
 		} catch(IOException e) {
+			displayMessage(e.getMessage());
 			e.printStackTrace();
 		}
 		
+		System.out.println("Listening for client connections (port: " + PORT + ")");
+		
 		while(true){
-		   try {
-			   System.out.println("Listening for client connections (port: " + PORT + ")");
-			   Socket connectionSocket = listenSocket.accept();
-			   connectionSocket.setSoTimeout(5000); //Don't wait endlessly for client to identify
-			   String clientId = getClientId(connectionSocket);
-			   
-			   if(isValidId(clientId)) { //Client successfully identified
-				   createSender(clientId, connectionSocket);
-				   createReceiver(clientId, connectionSocket);
-				   connectionSocket.setSoTimeout(0); //Remove timeout limit
-				   sendClientIdConfirmation(true, connectionSocket);
-				   
-			   } else {
-				   sendClientIdConfirmation(false, connectionSocket);
-			   }
-			   
-		   } catch(SocketTimeoutException e) {
-			   e.printStackTrace();
-			   
-		   } catch(IOException e) {
-			   e.printStackTrace();
-		   }
+			
+			try {
+				Socket connectionSocket = listenSocket.accept();
+				displayMessage("Received connection from: " + connectionSocket.getRemoteSocketAddress().toString());
+				connectionSocket.setSoTimeout(5000); //Don't wait endlessly for client to identify
+				String clientId = getClientId(connectionSocket);
+				
+				if(isValidId(clientId)) { //Client successfully identified
+					displayMessage("Client(" + connectionSocket.getRemoteSocketAddress().toString() + ") successfully identified as: " + clientId);
+					createSender(clientId, connectionSocket);
+					createReceiver(clientId, connectionSocket);
+					connectionSocket.setSoTimeout(0); //Remove timeout limit
+					sendClientIdConfirmation(true, connectionSocket);
+					
+				} else {
+					displayMessage("Client failed to identify as: " + clientId);
+					sendClientIdConfirmation(false, connectionSocket);
+				}
+				
+			} catch(SocketTimeoutException e) {
+				displayMessage(e.getMessage());
+				e.printStackTrace();
+				
+			} catch(IOException e) {
+				displayMessage(e.getMessage());
+				e.printStackTrace();
+			}
 		}
 	}
 	
+	/**
+	 * Ensures proper shutdown of the server.
+	 */
 	private static void shutDown() {
 		try {
 			listenSocket.close();
@@ -135,7 +146,7 @@ public class ServerController {
 	 */
 	private static void createSender(String id, Socket socket) throws IOException {
 		
-		Sender sender = new Sender(id, socket.getOutputStream());
+		Sender sender = new Sender(id, socket);
 		sender.start();
 		senders.add(sender);
 	}
@@ -149,7 +160,7 @@ public class ServerController {
 	 */
 	private static void createReceiver(String id, Socket socket) throws IOException {
 		
-		Receiver receiver = new Receiver(id, socket.getInputStream());
+		Receiver receiver = new Receiver(id, socket);
 		receiver.start();
 	}
 	
@@ -293,5 +304,14 @@ public class ServerController {
 		}
 		
 		return ids;
+	}
+	
+	/**
+	 * Writes a message to the display component associated with the server.
+	 * @param message
+	 */
+	public static synchronized void displayMessage(String message) {
+		//TODO Change to use UI component
+		System.out.println(message);
 	}
 }
