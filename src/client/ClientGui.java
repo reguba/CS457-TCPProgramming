@@ -1,45 +1,163 @@
 package client;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.Socket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import javax.swing.Box;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EmptyBorder;
 
-public class ClientGui {
+public class ClientGui extends JFrame {
 
-	public static int usercount = 0;
+	private static JFrame connectionFrame;
+	private static ClientController controller;
+	private JPanel contentPane;
+	private static JTextField txtSendArea;
+	private static JTextArea txtChatArea;
+	private static JList<String> lstGroups;
+	private static JList<String> lstUsers;
 
-	public static boolean connected = false;
-
-	public static String ipaddress = "127.0.01";
-
-	public static int portaddress = 9876;
-
-	public static String username = "";
-
-
+	/**
+	 * Launch the application.
+	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		
 		makeConnectionWindow();
 	}
 
-
+	/**
+	 * Create the frame.
+	 */
+	public ClientGui() {
+		
+		setVisible(true);
+		setBackground(Color.WHITE);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 672, 490);
+		contentPane = new JPanel();
+		contentPane.setBackground(Color.WHITE);
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(new BorderLayout(0, 0));
+		
+		JPanel occupancyPanel = new JPanel();
+		occupancyPanel.setBackground(Color.BLACK);
+		occupancyPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		contentPane.add(occupancyPanel, BorderLayout.EAST);
+		occupancyPanel.setLayout(new GridLayout(0, 1, 0, 0));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setOpaque(false);
+		scrollPane.setBackground(Color.BLACK);
+		scrollPane.setBorder(null);
+		occupancyPanel.add(scrollPane);
+		
+		lstGroups = new JList<String>();
+		lstGroups.setBorder(null);
+		lstGroups.setFixedCellWidth(120);
+		lstGroups.setModel(new DefaultListModel<String>());
+		lstGroups.setForeground(Color.GREEN);
+		lstGroups.setBackground(Color.BLACK);
+		scrollPane.setViewportView(lstGroups);
+		
+		JLabel lblGroups = new JLabel("Groups");
+		lblGroups.setOpaque(true);
+		lblGroups.setForeground(Color.GREEN);
+		lblGroups.setBackground(Color.BLACK);
+		scrollPane.setColumnHeaderView(lblGroups);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setOpaque(false);
+		scrollPane_1.setBackground(Color.BLACK);
+		scrollPane_1.setBorder(null);
+		occupancyPanel.add(scrollPane_1);
+		
+		lstUsers = new JList<String>();
+		lstUsers.setBorder(null);
+		lstUsers.setForeground(Color.GREEN);
+		lstUsers.setBackground(Color.BLACK);
+		lstUsers.setFixedCellWidth(120);
+		lstUsers.setModel(new DefaultListModel<String>());
+		scrollPane_1.setViewportView(lstUsers);
+		
+		JLabel lblUsers = new JLabel("Users");
+		lblUsers.setOpaque(true);
+		lblUsers.setBorder(null);
+		lblUsers.setForeground(Color.GREEN);
+		lblUsers.setBackground(Color.BLACK);
+		scrollPane_1.setColumnHeaderView(lblUsers);
+		
+		JPanel chatPanel = new JPanel();
+		contentPane.add(chatPanel, BorderLayout.SOUTH);
+		chatPanel.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnSend = new JButton("Send");
+		btnSend.setPreferredSize(new Dimension(120, 25));
+		chatPanel.add(btnSend, BorderLayout.EAST);
+		
+		txtSendArea = new JTextField();
+		txtSendArea.setText("sendArea");
+		chatPanel.add(txtSendArea, BorderLayout.CENTER);
+		txtSendArea.setColumns(10);
+		
+		Component verticalStrut = Box.createVerticalStrut(10);
+		chatPanel.add(verticalStrut, BorderLayout.NORTH);
+		
+		JPanel panel = new JPanel();
+		panel.setBackground(Color.WHITE);
+		contentPane.add(panel, BorderLayout.CENTER);
+		panel.setLayout(new BorderLayout(0, 0));
+		
+		JScrollPane scrollPane_2 = new JScrollPane();
+		panel.add(scrollPane_2);
+		scrollPane_2.setBorder(null);
+		
+		txtChatArea = new JTextArea();
+		txtChatArea.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		txtChatArea.setForeground(Color.GREEN);
+		txtChatArea.setBackground(Color.BLACK);
+		scrollPane_2.setViewportView(txtChatArea);
+		
+		Component horizontalStrut = Box.createHorizontalStrut(10);
+		panel.add(horizontalStrut, BorderLayout.EAST);
+	}
+	
 	private static void makeConnectionWindow() {
-		JFrame connectionFrame = new JFrame("Welcome!");
+		
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
+		
+		connectionFrame = new JFrame("TCP Chat");
 		connectionFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JPanel panel = new JPanel();
 
@@ -53,22 +171,44 @@ public class ClientGui {
 		final JButton quitButton = new JButton("Quit");
 
 		connectButton.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-				ipaddress = ipNum.getText().toString();
-				try {
-					portaddress = Integer.parseInt(portNum.getText());
-				} catch (NumberFormatException nfe) {
-					JOptionPane.showMessageDialog(null,
-							"Incorrect Port Number", null, 0);
-					portNum.setText("");
-					return;
-				}
-				username = userName.getText().toString();
-				checkConnection();
+				
+				EventQueue.invokeLater(new Runnable() {
+					public void run() {
+						try {
+							
+							InetAddress ip = InetAddress.getByName(ipNum.getText());
+							int port = Integer.parseInt(portNum.getText());
+							
+							controller = new ClientController(ip, port, userName.getText(), txtChatArea, txtSendArea, lstGroups, lstUsers);
+							ClientGui frame = new ClientGui();
+							frame.setVisible(true);
+							connectionFrame.setVisible(false);
+						
+						} catch (UnknownHostException e) {
+							JOptionPane.showMessageDialog(null,
+									"Invalid IP address", null, 0);
+							e.printStackTrace();
+							
+						} catch (NumberFormatException e) {
+							JOptionPane.showMessageDialog(null,
+									"Invalid port number", null, 0);
+							
+						} catch (IllegalArgumentException e) {
+							JOptionPane.showMessageDialog(null,
+									e.getMessage(), null, 0);
+							e.printStackTrace();
+						
+						} catch (IOException e) {
+							JOptionPane.showMessageDialog(null,
+									"Unable to connect to server!", null, 0);
+							e.printStackTrace();
+						}
+					}
+				});
 			}
 		});
-
+		
 		quitButton.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -91,137 +231,5 @@ public class ClientGui {
 		connectionFrame.setResizable(false);
 		connectionFrame.setLocationRelativeTo(null);
 		connectionFrame.setVisible(true);
-	}
-
-
-	private static void checkConnection() {
-
-		try {
-			Socket clientSocket = new Socket(ipaddress, portaddress);
-			connected = true;
-			makeClientWindow();
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null,
-					"Server at: " + ipaddress + ":" + portaddress
-							+ " was not found!", null, 0);
-		}
-
-	}
-
-
-	private static void makeClientWindow() {
-		JComponent redComp = new JPanel();
-		redComp.setBackground(Color.RED);
-
-		JComponent greenComp = new JPanel();
-		greenComp.setBackground(Color.GREEN);
-
-		JComponent blueComp = new JPanel();
-		blueComp.setBackground(Color.WHITE);
-
-		JComponent whiteComp = new JPanel();
-		whiteComp.setBackground(Color.WHITE);
-
-		GridBagConstraints gbc = new GridBagConstraints();
-		// we'll use this anchor/fill for all components
-		gbc.anchor = GridBagConstraints.NORTHWEST;
-		gbc.fill = GridBagConstraints.BOTH;
-
-		JPanel panel = new JPanel(new GridBagLayout());
-
-		JTextArea chatWindow = new JTextArea();
-		JScrollPane chatWindowScroll = new JScrollPane(chatWindow);
-		chatWindowScroll.setEnabled(false);
-		chatWindow.setHighlighter(null);
-		chatWindow.setEditable(false);
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridwidth = 2;
-		gbc.gridheight = 1;
-		gbc.weightx = 0.9; // use 80% of the overall width
-		gbc.weighty = 0.9; // use 80% of the overall height
-		panel.add(chatWindowScroll, gbc);
-		// panel.add(redComp, gbc);
-
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 2;
-		gbc.weightx = 0.1; // use 20% of the overall width
-		gbc.weighty = 1.0; // use 100% of the overall height
-		panel.add(blueComp, gbc);
-
-		JLabel UsersTitle = new JLabel("Users Online" + " ("
-				+ usercount + ")");
-
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.gridwidth = 0;
-		gbc.gridheight = 2;
-		gbc.weightx = 0.1; // use 20% of the overall width of
-							// UsersCount
-		gbc.weighty = 1.0; // use 100% of the overall height
-							// UserCounter
-
-		blueComp.add(UsersTitle);
-
-		final JTextPane chatArea = new JTextPane();
-		JScrollPane chatAreaScroll = new JScrollPane(chatArea);
-		chatArea.setText("You are not connected yet.");
-
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.weightx = 0.9; // use 80% of the width used by green/white
-							// comps
-		gbc.weighty = 0.1; // use 20% of the overall height
-		panel.add(chatAreaScroll, gbc);
-		// panel.add(greenComp, gbc);
-
-		final JButton sendMessage = new JButton("Connect");
-		sendMessage.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-
-				int userNum = (int) Math.random();
-				String username = "user " + userNum;
-				username = JOptionPane.showInputDialog("Username");
-
-				String getPortNum = "0";
-				getPortNum = JOptionPane.showInputDialog("Port Number");
-
-				try {
-					int portNum = Integer.parseInt(getPortNum);
-					sendMessage.setText("Send");
-					chatArea.setText("Connecting...");
-				} catch (IllegalArgumentException IAE) {
-					JOptionPane.showMessageDialog(null,
-							"Invalid port number.");
-				}
-
-				System.out.println(username);
-
-			}
-		});
-
-		gbc.gridx = 1;
-		gbc.gridy = 1;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.weightx = 0.1; // use 20% of the width used by green/white
-							// comps
-		gbc.weighty = 0.1; // use 20% of the overall height
-		panel.add(sendMessage, gbc);
-		// panel.add(whiteComp, gbc);
-
-		JFrame frame = new JFrame("Client GUI");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().add(panel);
-		frame.setSize(600, 400);
-		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
 	}
 }

@@ -15,6 +15,7 @@ public class Sender extends Thread {
 	private LinkedBlockingQueue<String> queue;
 	
 	public Sender(String id, Socket socket) throws IOException	{
+		this.id = id;
 		this.socket = socket;
 		this.outStream = socket.getOutputStream();
 		this.queue = new LinkedBlockingQueue<String>();

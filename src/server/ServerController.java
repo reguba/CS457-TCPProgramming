@@ -3,6 +3,7 @@ package server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -31,6 +32,11 @@ public class ServerController {
 	private static ServerSocket listenSocket;
 	
 	public static void main(String argv[]) {
+		
+		senders = new ArrayList<Sender>();
+		groups = new HashMap<String, ArrayList<Sender>>();
+		
+		createGroup("Lobby"); //Create the default group
 		
 		//Ensure the controller can shutdown properly
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -63,11 +69,11 @@ public class ServerController {
 					createSender(clientId, connectionSocket);
 					createReceiver(clientId, connectionSocket);
 					connectionSocket.setSoTimeout(0); //Remove timeout limit
-					sendClientIdConfirmation(true, connectionSocket);
+					sendClientIdConfirmation(true, connectionSocket.getOutputStream());
 					
 				} else {
 					displayMessage("Client failed to identify as: " + clientId);
-					sendClientIdConfirmation(false, connectionSocket);
+					sendClientIdConfirmation(false, connectionSocket.getOutputStream());
 				}
 				
 			} catch(SocketTimeoutException e) {
@@ -128,13 +134,15 @@ public class ServerController {
 	 * @param socket The socket on which the client is connected.
 	 * @throws IOException If there is an error sending the confirmation
 	 */
-	private static void sendClientIdConfirmation(boolean isValid, Socket socket) throws IOException {
+	private static void sendClientIdConfirmation(boolean isValid, OutputStream outStream) throws IOException {
 		
 		if(isValid) {
-			socket.sendUrgentData(1); //Inform client its id is valid
+			outStream.write(1); //Inform client its id is valid
 		} else {
-			socket.sendUrgentData(0); //Inform client its id is invalid
+			outStream.write(0); //Inform client its id is invalid
 		}
+		
+		outStream.flush();
 	}
 	
 	/**
@@ -268,6 +276,31 @@ public class ServerController {
 	private static ArrayList<Sender> getGroup(String groupName) {
 		
 		return groups.get(groupName);
+	}
+	
+	/**
+	 * Returns the name of the group the client is in
+	 * or null if the client does not exist.
+	 */
+	public static String getClientGroupName(String clientId) {
+		
+		Iterator<String> groupNames = groups.keySet().iterator();
+		
+		while(groupNames.hasNext()) {
+			
+			String groupName = groupNames.next();
+			Iterator<Sender> clients = groups.get(groupName).iterator();
+			
+			while(clients.hasNext()) {
+				Sender client = clients.next();
+				
+				if(client.getClientId().equals(clientId)) {
+					return groupName;
+				}
+			}
+		}
+		
+		return null;
 	}
 	
 	/**
