@@ -192,6 +192,15 @@ public class ServerController {
 		return null;
 	}
 	
+	public static boolean clientExists(String id) {
+		
+		if(getSenderById(id) != null) {
+			return true;
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * Sends the given message to the client specified by
 	 * the receiverId.
@@ -253,7 +262,7 @@ public class ServerController {
 	 * @param senderId The id of the client sending the message.
 	 * @param message The message being sent.
 	 */
-	public static void broadcastMessage(String senderId, String message) {
+	public static void sendBroadcastMessage(String senderId, String message) {
 		
 		Iterator<Sender> clients = senders.iterator();
 		

@@ -107,24 +107,38 @@ public class Receiver extends Thread {
 		if(tokens.size() < 2) {
 			sendErrorMessage("No message sent");
 		} else {
-			
 			ServerController.sendGroupMessage(id, ServerController.getClientGroupName(id), buildMessage(tokens, 1));
 		}
 	}
 	
 	private void sendBroadcast(ArrayList<String> tokens) {
 		
+		// /b message
+		if(tokens.size() < 2) {
+			sendErrorMessage("No message sent");
+		} else {
+			ServerController.sendBroadcastMessage(id, buildMessage(tokens, 1));
+		}
 	}
 	
 	private void sendPrivate(ArrayList<String> tokens) {
 		
+		if(tokens.size() < 3) {
+			sendErrorMessage("Private message usage: /p username message");
+		} else if(!ServerController.clientExists(tokens.get(1))) {
+			sendErrorMessage("User " + tokens.get(1) + " does not exist");
+		} else {
+			ServerController.sendPrivateMessage(id, tokens.get(1), buildMessage(tokens, 2));
+		}
 	}
 	
 	private void createGroup(ArrayList<String> tokens) {
 		
+		
 	}
 	
 	private void joinGroup(ArrayList<String> tokens) {
+		
 		
 	}
 	
