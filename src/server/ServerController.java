@@ -157,6 +157,7 @@ public class ServerController {
 		Sender sender = new Sender(id, socket);
 		sender.start();
 		senders.add(sender);
+		groups.get("Lobby").add(sender); //put new connections in lobby
 	}
 	
 	/**
@@ -200,7 +201,8 @@ public class ServerController {
 	 */
 	private static void sendMessage(String senderId, String receiverId, String message) {
 		
-		getSenderById(receiverId).queueMessageToSend(senderId, message);
+		String formattedMessage = "<" + senderId + "> " + message;
+		getSenderById(receiverId).queueMessageToSend(formattedMessage);
 	}
 	
 	/**

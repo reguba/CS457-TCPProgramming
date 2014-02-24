@@ -30,6 +30,8 @@ public class Sender extends Thread {
 			try {
 				
 				writer.write(queue.take());
+				writer.newLine();
+				writer.flush();
 				
 			} catch (Exception e) {
 				ServerController.displayMessage(e.getMessage());
@@ -56,8 +58,8 @@ public class Sender extends Thread {
 	 * @param senderId The id of the client sending the message.
 	 * @param message The message being sent.
 	 */
-	public synchronized void queueMessageToSend(String senderId, String message) {
+	public synchronized void queueMessageToSend(String message) {
 		
-		queue.add(new String(senderId + " " + message));
+		queue.add(new String(message));
 	}
 }

@@ -96,6 +96,7 @@ public class Receiver extends Thread {
 				
 			default:	//bad command
 				sendInvalidMessageError("Unrecognized command");
+				break;
 		}
 		
 	}
@@ -137,9 +138,9 @@ public class Receiver extends Thread {
 	
 	private String buildMessage(ArrayList<String> tokens, int messageIndex) {
 		
-		String message = "";
+		String message = tokens.get(messageIndex);
 		
-		for(int i = messageIndex; i < tokens.size(); i++) {
+		for(int i = messageIndex + 1; i < tokens.size(); i++) {
 			message = message + " " + tokens.get(i);
 		}
 		

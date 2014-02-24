@@ -48,6 +48,8 @@ public class ClientController {
 		this.sendArea = sendArea;
 		this.groupList = groupList;
 		this.userList = userList;
+		
+		new Receiver(socket, chatArea).start();
 	}
 	
 	private boolean getUserNameConfirmation() throws IOException {
@@ -63,5 +65,13 @@ public class ClientController {
 		}
 		
 		return false;
+	}
+	
+	public void sendMessage(String message) throws IOException {
+		
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+		writer.write(message);
+		writer.newLine();
+		writer.flush();
 	}
 }

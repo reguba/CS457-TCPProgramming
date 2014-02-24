@@ -73,7 +73,6 @@ public class ClientGui extends JFrame {
 		scrollPane.setBorder(null);
 		occupancyPanel.add(scrollPane);
 		
-		lstGroups = new JList<String>();
 		lstGroups.setBorder(null);
 		lstGroups.setFixedCellWidth(120);
 		lstGroups.setModel(new DefaultListModel<String>());
@@ -93,7 +92,6 @@ public class ClientGui extends JFrame {
 		scrollPane_1.setBorder(null);
 		occupancyPanel.add(scrollPane_1);
 		
-		lstUsers = new JList<String>();
 		lstUsers.setBorder(null);
 		lstUsers.setForeground(Color.GREEN);
 		lstUsers.setBackground(Color.BLACK);
@@ -113,10 +111,20 @@ public class ClientGui extends JFrame {
 		chatPanel.setLayout(new BorderLayout(0, 0));
 		
 		JButton btnSend = new JButton("Send");
+		btnSend.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					controller.sendMessage(txtSendArea.getText());
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(null,
+							"Error sending message", null, 0);
+					e.printStackTrace();
+				}
+			}
+		});
 		btnSend.setPreferredSize(new Dimension(120, 25));
 		chatPanel.add(btnSend, BorderLayout.EAST);
 		
-		txtSendArea = new JTextField();
 		txtSendArea.setText("sendArea");
 		chatPanel.add(txtSendArea, BorderLayout.CENTER);
 		txtSendArea.setColumns(10);
@@ -133,7 +141,6 @@ public class ClientGui extends JFrame {
 		panel.add(scrollPane_2);
 		scrollPane_2.setBorder(null);
 		
-		txtChatArea = new JTextArea();
 		txtChatArea.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		txtChatArea.setForeground(Color.GREEN);
 		txtChatArea.setBackground(Color.BLACK);
@@ -176,6 +183,11 @@ public class ClientGui extends JFrame {
 				EventQueue.invokeLater(new Runnable() {
 					public void run() {
 						try {
+							
+							txtSendArea = new JTextField();
+							txtChatArea = new JTextArea();
+							lstGroups = new JList<String>();
+							lstUsers = new JList<String>();
 							
 							InetAddress ip = InetAddress.getByName(ipNum.getText());
 							int port = Integer.parseInt(portNum.getText());
