@@ -13,7 +13,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import javax.swing.Box;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -27,9 +26,11 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.DefaultCaret;
 
 public class ClientGui extends JFrame {
 
+	private static final long serialVersionUID = 1L;
 	private static JFrame connectionFrame;
 	private static ClientController controller;
 	private JPanel contentPane;
@@ -75,7 +76,6 @@ public class ClientGui extends JFrame {
 		
 		lstGroups.setBorder(null);
 		lstGroups.setFixedCellWidth(120);
-		lstGroups.setModel(new DefaultListModel<String>());
 		lstGroups.setForeground(Color.GREEN);
 		lstGroups.setBackground(Color.BLACK);
 		scrollPane.setViewportView(lstGroups);
@@ -96,7 +96,6 @@ public class ClientGui extends JFrame {
 		lstUsers.setForeground(Color.GREEN);
 		lstUsers.setBackground(Color.BLACK);
 		lstUsers.setFixedCellWidth(120);
-		lstUsers.setModel(new DefaultListModel<String>());
 		scrollPane_1.setViewportView(lstUsers);
 		
 		JLabel lblUsers = new JLabel("Users");
@@ -125,7 +124,6 @@ public class ClientGui extends JFrame {
 		btnSend.setPreferredSize(new Dimension(120, 25));
 		chatPanel.add(btnSend, BorderLayout.EAST);
 		
-		txtSendArea.setText("sendArea");
 		chatPanel.add(txtSendArea, BorderLayout.CENTER);
 		txtSendArea.setColumns(10);
 		
@@ -144,6 +142,7 @@ public class ClientGui extends JFrame {
 		txtChatArea.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		txtChatArea.setForeground(Color.GREEN);
 		txtChatArea.setBackground(Color.BLACK);
+		txtChatArea.setEditable(false);
 		scrollPane_2.setViewportView(txtChatArea);
 		
 		Component horizontalStrut = Box.createHorizontalStrut(10);
@@ -186,6 +185,7 @@ public class ClientGui extends JFrame {
 							
 							txtSendArea = new JTextField();
 							txtChatArea = new JTextArea();
+							((DefaultCaret)txtChatArea.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 							lstGroups = new JList<String>();
 							lstUsers = new JList<String>();
 							

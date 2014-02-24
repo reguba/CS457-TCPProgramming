@@ -9,13 +9,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Sender extends Thread {
 	
-	private String id;
+	private String clientId;
 	private Socket socket;
 	private OutputStream outStream;
 	private LinkedBlockingQueue<String> queue;
 	
 	public Sender(String id, Socket socket) throws IOException	{
-		this.id = id;
+		this.clientId = id;
 		this.socket = socket;
 		this.outStream = socket.getOutputStream();
 		this.queue = new LinkedBlockingQueue<String>();
@@ -34,15 +34,7 @@ public class Sender extends Thread {
 				writer.flush();
 				
 			} catch (Exception e) {
-				ServerController.displayMessage(e.getMessage());
-				e.printStackTrace();
-				
-				try {
-					socket.close(); //Will force receiver to close
-				} catch (IOException e1) {
-					e1.printStackTrace(); //Socket has already been closed
-				}
-				
+				disconnect();				
 				return;
 			}
 		}
@@ -50,7 +42,7 @@ public class Sender extends Thread {
 	
 	public String getClientId()	{
 		
-		return id;
+		return clientId;
 	}
 	
 	/**
@@ -61,5 +53,19 @@ public class Sender extends Thread {
 	public synchronized void queueMessageToSend(String message) {
 		
 		queue.add(new String(message));
+	}
+	
+	/**
+	 * Shuts down this sender and registers
+	 * the disconnection of the client with
+	 * the server and causes the corresponding
+	 * receiver to shutdown.
+	 */
+	public synchronized void disconnect() {
+		try {
+			socket.close();
+		} catch (IOException e) {
+			//Socket already closed
+		}
 	}
 }

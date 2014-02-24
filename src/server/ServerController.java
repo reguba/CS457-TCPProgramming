@@ -11,9 +11,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import javax.swing.JTextArea;
+
 import utils.Utils;
 
-public class ServerController {
+public class ServerController extends Thread {
 	
 	//Rules of engagement:
 	//1. Client connects to server and sends a string representing its id
@@ -28,15 +30,21 @@ public class ServerController {
 	
 	private static ArrayList<Sender> senders;
 	private static HashMap<String, ArrayList<Sender>> groups;
+	private static JTextArea diagLog;
 	
 	private static ServerSocket listenSocket;
 	
-	public static void main(String argv[]) {
+	public ServerController(JTextArea diagLog) {
+		
+		ServerController.diagLog = diagLog;
 		
 		senders = new ArrayList<Sender>();
 		groups = new HashMap<String, ArrayList<Sender>>();
 		
 		createGroup("Lobby"); //Create the default group
+	}
+	
+	public void run() {
 		
 		//Ensure the controller can shutdown properly
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -54,7 +62,7 @@ public class ServerController {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Listening for client connections (port: " + PORT + ")");
+		displayMessage("Listening for client connections (port: " + PORT + ")");
 		
 		while(true){
 			
@@ -70,6 +78,7 @@ public class ServerController {
 					createReceiver(clientId, connectionSocket);
 					connectionSocket.setSoTimeout(0); //Remove timeout limit
 					sendClientIdConfirmation(true, connectionSocket.getOutputStream());
+					joinGroup(clientId, "Lobby"); //put new connections in lobby
 					
 				} else {
 					displayMessage("Client failed to identify as: " + clientId);
@@ -157,7 +166,6 @@ public class ServerController {
 		Sender sender = new Sender(id, socket);
 		sender.start();
 		senders.add(sender);
-		groups.get("Lobby").add(sender); //put new connections in lobby
 	}
 	
 	/**
@@ -208,10 +216,23 @@ public class ServerController {
 	 * @param receiverId The id of the client to receive the message.
 	 * @param Message The message being sent.
 	 */
-	private static void sendMessage(String senderId, String receiverId, String message) {
+	private static void sendUserMessage(String senderId, String receiverId, String message) {
 		
-		String formattedMessage = "<" + senderId + "> " + message;
+		String formattedMessage = "<" + senderId + ">" + message;
 		getSenderById(receiverId).queueMessageToSend(formattedMessage);
+	}
+	
+	/**
+	 * Sends an update message to all clients on the server.
+	 * @param message The update message to send.
+	 */
+	private static void sendUpdateMessage(String message) {
+		
+		Iterator<Sender> clients = senders.iterator();
+		
+		while(clients.hasNext()) {
+			clients.next().queueMessageToSend(message);
+		}
 	}
 	
 	/**
@@ -221,7 +242,7 @@ public class ServerController {
 	 */
 	public static void sendErrorMessage(String senderId, String message) {
 		
-		sendMessage("ERROR", senderId, message);
+		sendUserMessage("ERROR", senderId, message);
 	}
 	
 	/**
@@ -233,8 +254,8 @@ public class ServerController {
 	 */
 	public static void sendPrivateMessage(String senderId, String receiverId, String message) {
 		
-		sendMessage(senderId, receiverId, message);
-		sendMessage(senderId, senderId, message); //Sent messages should always be echo'ed back to sender
+		sendUserMessage(senderId, receiverId, "<p> " + message);
+		sendUserMessage(senderId, senderId, "<p> " + message); //Sent messages should always be echo'ed back to sender
 	}
 	
 	/**
@@ -252,7 +273,7 @@ public class ServerController {
 			Iterator<Sender> clients = grps.next().iterator();
 			
 			while(clients.hasNext()) {
-				sendMessage(senderId, clients.next().getClientId(), message);
+				sendUserMessage(senderId, clients.next().getClientId(), message);
 			}
 		}
 	}
@@ -267,7 +288,7 @@ public class ServerController {
 		Iterator<Sender> clients = senders.iterator();
 		
 		while(clients.hasNext()) { //Echos back to sender as well
-			sendMessage(senderId, clients.next().getClientId(), message);
+			sendUserMessage(senderId, clients.next().getClientId(), "<b> " + message);
 		}
 	}
 	
@@ -287,6 +308,7 @@ public class ServerController {
 		
 		if(getGroup(groupName) == null) { //If group exists, do nothing
 			groups.put(groupName, new ArrayList<Sender>());
+			updateOccupancy();
 		}
 	}
 	
@@ -338,6 +360,7 @@ public class ServerController {
 		}
 		
 		getGroup(groupName).add(getSenderById(clientId));
+		updateOccupancy();
 	}
 	
 	//TODO getClientsIds should take a group name
@@ -360,12 +383,54 @@ public class ServerController {
 		return ids;
 	}
 	
+	public static void updateOccupancy() {
+		
+		//Group update message is as follows:
+		// /gu groupname user1 user2 user3 ... \n
+		
+		Iterator<String> groupNames = groups.keySet().iterator();
+		
+		while(groupNames.hasNext()) {
+			
+			String groupName = new String(groupNames.next());
+			String groupUpdateMessage = new String("/gu " + groupName);
+			Iterator<Sender> users = groups.get(groupName).iterator();
+			
+			while(users.hasNext()) {
+				groupUpdateMessage = groupUpdateMessage + " " + users.next().getClientId();
+			}
+			
+			sendUpdateMessage(groupUpdateMessage);
+		}
+	}
+	
+	/**
+	 * Disconnects the specified client from the server.
+	 * 
+	 * Note: The sender must be interrupted to halt,
+	 * while the receiver halts when the sender closes
+	 * its socket.
+	 * 
+	 * @param clientId
+	 */
+	public static void disconnect(String clientId) {
+		
+		Sender sender = getSenderById(clientId);
+		
+		//Remove from group then remove from overall sender list
+		if(groups.get(getClientGroupName(clientId)).remove(sender)) {
+			senders.remove(sender);
+			sender.interrupt(); //Cause the sender to terminate
+			displayMessage("Disconnected user: " + clientId);
+			updateOccupancy();
+		}
+	}
+	
 	/**
 	 * Writes a message to the display component associated with the server.
 	 * @param message
 	 */
 	public static synchronized void displayMessage(String message) {
-		//TODO Change to use UI component
-		System.out.println(message);
+		diagLog.append(message + "\n");
 	}
 }

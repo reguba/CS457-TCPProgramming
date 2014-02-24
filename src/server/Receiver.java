@@ -10,7 +10,7 @@ import java.util.StringTokenizer;
 
 public class Receiver extends Thread {
 	
-	private String id;
+	private String clientId;
 	private Socket socket;
 	private InputStream inStream;
 
@@ -27,7 +27,7 @@ public class Receiver extends Thread {
 	 */
 	
 	public Receiver(String id, Socket socket) throws IOException {
-		this.id = id;
+		this.clientId = id;
 		this.socket = socket;
 		this.inStream = socket.getInputStream();
 	}
@@ -45,15 +45,8 @@ public class Receiver extends Thread {
 				parseMessage(received);
 				
 			} catch (Exception e) {
-				ServerController.displayMessage(e.getMessage());
-				e.printStackTrace();
 				
-				try {
-					socket.close(); //Will force sender to close
-				} catch (IOException e1) {
-					e1.printStackTrace(); //Socket has already been closed
-				}
-				
+				disconnect();
 				return;
 			}
 		}
@@ -107,7 +100,7 @@ public class Receiver extends Thread {
 		if(tokens.size() < 2) {
 			sendErrorMessage("No message sent");
 		} else {
-			ServerController.sendGroupMessage(id, ServerController.getClientGroupName(id), buildMessage(tokens, 1));
+			ServerController.sendGroupMessage(clientId, ServerController.getClientGroupName(clientId), buildMessage(tokens, 1));
 		}
 	}
 	
@@ -117,7 +110,7 @@ public class Receiver extends Thread {
 		if(tokens.size() < 2) {
 			sendErrorMessage("No message sent");
 		} else {
-			ServerController.sendBroadcastMessage(id, buildMessage(tokens, 1));
+			ServerController.sendBroadcastMessage(clientId, buildMessage(tokens, 1));
 		}
 	}
 	
@@ -128,7 +121,7 @@ public class Receiver extends Thread {
 		} else if(!ServerController.clientExists(tokens.get(1))) {
 			sendErrorMessage("User " + tokens.get(1) + " does not exist");
 		} else {
-			ServerController.sendPrivateMessage(id, tokens.get(1), buildMessage(tokens, 2));
+			ServerController.sendPrivateMessage(clientId, tokens.get(1), buildMessage(tokens, 2));
 		}
 	}
 	
@@ -144,11 +137,12 @@ public class Receiver extends Thread {
 	
 	private void kickUser(ArrayList<String> tokens) {
 		
+		
 	}
 	
 	private void sendErrorMessage(String error) {
 		
-		ServerController.sendErrorMessage(id, error);
+		ServerController.sendErrorMessage(clientId, error);
 	}
 	
 	private String buildMessage(ArrayList<String> tokens, int messageIndex) {
@@ -160,5 +154,21 @@ public class Receiver extends Thread {
 		}
 		
 		return message;
+	}
+	
+	/**
+	 * Shuts down this receiver and registers
+	 * the disconnection of the client with
+	 * the server and causes the corresponding
+	 * sender to shutdown.
+	 */
+	public synchronized void disconnect() {
+		
+		ServerController.disconnect(clientId);
+		try {
+			socket.close();
+		} catch (IOException e) {
+			//Socket already closed
+		}
 	}
 }

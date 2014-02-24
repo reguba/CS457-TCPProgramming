@@ -63,11 +63,11 @@ public class Receiver extends Thread {
 		
 		ArrayList<String> users = new ArrayList<String>();
 		
-		for(int i = 1; i < tokens.size(); i++) {
+		for(int i = 2; i < tokens.size(); i++) {
 			users.add(tokens.get(i));
 		}
 		
-		ClientController.updateGroup(tokens.get(0), users);
+		ClientController.updateGroup(tokens.get(1), users);
 	}
 	
 	private void displayChatMessage(String message) {

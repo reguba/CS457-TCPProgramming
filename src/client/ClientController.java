@@ -26,17 +26,17 @@ public class ClientController {
 	private BufferedWriter writer;
 	private static JList<String> groupList;
 	private static JList<String> userList;
-	private String userName;
+	private static String userName;
 	private static HashMap<String, ArrayList<String>> groups;
-	private static String currentGroup;
 	
 	public ClientController(InetAddress ip, int port, String userName, JTextArea chatArea, JTextField sendArea, JList<String> groupList, JList<String> userList) throws IOException, IllegalArgumentException {
 		
 		this.socket = new Socket(ip, port);
 		this.inputStream = socket.getInputStream();
+		ClientController.groups = new HashMap<String, ArrayList<String>>();
 		this.outputStream = socket.getOutputStream();
 		this.writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-		this.userName = userName;
+		ClientController.userName = userName;
 		
 		socket.setSoTimeout(5000); //Limit amount of time server can take to validate username
 		if(!getUserNameConfirmation()) { //Bad username
@@ -74,10 +74,28 @@ public class ClientController {
 	private static void updateOccupancyLists() {
 		
 		DefaultListModel<String> groupModel = new DefaultListModel<String>();
+		DefaultListModel<String> userModel = new DefaultListModel<String>();
+		
 		Iterator<String> groupNames = groups.keySet().iterator();
 		
 		while(groupNames.hasNext()) {
-			groupModel.addElement(groupNames.next());
+			
+			String groupName = groupNames.next();
+			groupModel.addElement(groupName);
+			
+			//If we are in the group, update user list model
+			if(groups.get(groupName).contains(userName)) {
+				
+				Iterator<String> users = groups.get(groupName).iterator();
+				
+				while(users.hasNext()) {
+					
+					userModel.addElement(users.next());
+				}
+				
+				userList.setModel(userModel);
+			}
+			
 		}
 		
 		groupList.setModel(groupModel);
