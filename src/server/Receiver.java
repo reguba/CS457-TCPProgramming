@@ -95,7 +95,7 @@ public class Receiver extends Thread {
 				break;
 				
 			default:	//bad command
-				sendInvalidMessageError("Unrecognized command");
+				sendErrorMessage("Unrecognized command");
 				break;
 		}
 		
@@ -105,7 +105,7 @@ public class Receiver extends Thread {
 				
 		// /s message
 		if(tokens.size() < 2) {
-			sendInvalidMessageError("No message sent");
+			sendErrorMessage("No message sent");
 		} else {
 			
 			ServerController.sendGroupMessage(id, ServerController.getClientGroupName(id), buildMessage(tokens, 1));
@@ -132,8 +132,9 @@ public class Receiver extends Thread {
 		
 	}
 	
-	private void sendInvalidMessageError(String error) {
+	private void sendErrorMessage(String error) {
 		
+		ServerController.sendErrorMessage(id, error);
 	}
 	
 	private String buildMessage(ArrayList<String> tokens, int messageIndex) {

@@ -206,6 +206,16 @@ public class ServerController {
 	}
 	
 	/**
+	 * Sends an error formatted message to the specified client.
+	 * @param senderId The id of the client receiving the error.
+	 * @param message The message describing the error.
+	 */
+	public static void sendErrorMessage(String senderId, String message) {
+		
+		sendMessage("ERROR", senderId, message);
+	}
+	
+	/**
 	 * Sends the given message to the client specified by
 	 * the receiverId.
 	 * @param senderId The id of the client sending the message.

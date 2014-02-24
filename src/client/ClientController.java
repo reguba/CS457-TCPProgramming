@@ -9,7 +9,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -22,12 +26,11 @@ public class ClientController {
 	private InputStream inputStream;
 	private OutputStream outputStream;
 	private BufferedWriter writer;
-	private BufferedReader reader;
-	private JTextArea chatArea;
-	private JTextField sendArea;
-	private JList<String> groupList;
-	private JList<String> userList;
+	private static JList<String> groupList;
+	private static JList<String> userList;
 	private String userName;
+	private static HashMap<String, ArrayList<String>> groups;
+	private static String currentGroup;
 	
 	public ClientController(InetAddress ip, int port, String userName, JTextArea chatArea, JTextField sendArea, JList<String> groupList, JList<String> userList) throws IOException, IllegalArgumentException {
 		
@@ -35,7 +38,6 @@ public class ClientController {
 		this.inputStream = socket.getInputStream();
 		this.outputStream = socket.getOutputStream();
 		this.writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-		this.reader = new BufferedReader(new InputStreamReader(inputStream));
 		this.userName = userName;
 		
 		socket.setSoTimeout(5000); //Limit amount of time server can take to validate username
@@ -44,10 +46,8 @@ public class ClientController {
 		}
 		socket.setSoTimeout(0);
 		
-		this.chatArea = chatArea;
-		this.sendArea = sendArea;
-		this.groupList = groupList;
-		this.userList = userList;
+		ClientController.groupList = groupList;
+		ClientController.userList = userList;
 		
 		new Receiver(socket, chatArea).start();
 	}
@@ -65,6 +65,24 @@ public class ClientController {
 		}
 		
 		return false;
+	}
+	
+	public static void updateGroup(String groupName, ArrayList<String> users) {
+		
+		groups.put(groupName, users);
+		updateOccupancyLists();
+	}
+	
+	private static void updateOccupancyLists() {
+		
+		DefaultListModel<String> groupModel = new DefaultListModel<String>();
+		Iterator<String> groupNames = groups.keySet().iterator();
+		
+		while(groupNames.hasNext()) {
+			groupModel.addElement(groupNames.next());
+		}
+		
+		groupList.setModel(groupModel);
 	}
 	
 	public void sendMessage(String message) throws IOException {
