@@ -250,7 +250,7 @@ public class ClientGui extends JFrame {
 		panel.add(quitButton);
 
 		connectionFrame.getContentPane().add(panel);
-		connectionFrame.setSize(300, 90);
+		connectionFrame.setSize(300, 120);
 		connectionFrame.setResizable(false);
 		connectionFrame.setLocationRelativeTo(null);
 		connectionFrame.setVisible(true);
