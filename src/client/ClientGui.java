@@ -120,12 +120,15 @@ public class ClientGui extends JFrame {
 		JButton btnSend = new JButton("Send");
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				try {
-					controller.sendMessage(txtSendArea.getText());
-				} catch (IOException e) {
-					JOptionPane.showMessageDialog(null,
-							"Error sending message", null, 0);
-					e.printStackTrace();
+				if(!txtSendArea.getText().equals("")) {
+					try {
+						controller.sendMessage(txtSendArea.getText());
+						txtSendArea.setText("");
+					} catch (IOException e) {
+						JOptionPane.showMessageDialog(null,
+								"Error sending message", null, 0);
+						e.printStackTrace();
+					}
 				}
 			}
 		});
