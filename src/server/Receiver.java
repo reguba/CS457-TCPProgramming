@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 
 public class Receiver extends Thread {
@@ -87,6 +88,10 @@ public class Receiver extends Thread {
 				kickUser(tokens);
 				break;
 				
+			case "/w": //who
+				getUsers();
+				break;
+				
 			default:	//bad command
 				sendErrorMessage("Unrecognized command");
 				break;
@@ -127,17 +132,36 @@ public class Receiver extends Thread {
 	
 	private void createGroup(ArrayList<String> tokens) {
 		
-		
+		ServerController.createGroup(tokens.get(1));
 	}
 	
 	private void joinGroup(ArrayList<String> tokens) {
 		
-		
+		ServerController.joinGroup(clientId, tokens.get(1));
 	}
 	
 	private void kickUser(ArrayList<String> tokens) {
 		
+		if(tokens.size() < 2) {
+			sendErrorMessage("Kick usage: /kick username");
+			return;
+		}
 		
+		if(!ServerController.kickClient(tokens.get(1))) {
+			sendErrorMessage("User not found: " + tokens.get(1));
+		}
+	}
+	
+	private void getUsers() {
+		
+		Iterator<String> usernames = ServerController.getClientIds().iterator();
+		String userList = new String();
+		
+		while(usernames.hasNext()) {
+			userList = userList + usernames.next() + "\n";
+		}
+		
+		ServerController.sendInfoMessage(clientId, userList);
 	}
 	
 	private void sendErrorMessage(String error) {

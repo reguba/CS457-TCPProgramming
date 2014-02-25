@@ -32,9 +32,10 @@ public class Receiver extends Thread {
 				String message = reader.readLine();
 				parseMessage(message);
 				
-			} catch (IOException e) {
-				// TODO Inform client that we're sunk...
+			} catch (Exception e) {
+				displayChatMessage("Disconnected from server");
 				e.printStackTrace();
+				return;
 			}
 		}
 	}
@@ -48,14 +49,16 @@ public class Receiver extends Thread {
 			tokens.add(tokenizer.nextToken());
 		}
 		
-		switch(tokens.get(0)) {
-			case "/gu":
-				updateGroup(tokens);
-				break;
-				
-			default:
-				displayChatMessage(message);
-				break;
+		if(tokens.size() > 0) {
+			switch(tokens.get(0)) {
+				case "/gu":
+					updateGroup(tokens);
+					break;
+					
+				default:
+					displayChatMessage(message);
+					break;
+			}
 		}
 	}
 	

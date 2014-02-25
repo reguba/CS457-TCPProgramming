@@ -95,7 +95,6 @@ public class ClientController {
 				
 				userList.setModel(userModel);
 			}
-			
 		}
 		
 		groupList.setModel(groupModel);

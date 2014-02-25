@@ -60,6 +60,7 @@ public class ServerController extends Thread {
 		} catch(IOException e) {
 			displayMessage(e.getMessage());
 			e.printStackTrace();
+			return;
 		}
 		
 		displayMessage("Listening for client connections (port: " + PORT + ")");
@@ -187,13 +188,16 @@ public class ServerController extends Thread {
 	 */
 	private static Sender getSenderById(String id) {
 		
-		Iterator<Sender> clients = senders.iterator();
+		if(id != null) {
 		
-		while(clients.hasNext()) {
-			Sender client = clients.next();
+			Iterator<Sender> clients = senders.iterator();
 			
-			if(client.getClientId().equals(id)) {
-				return client;
+			while(clients.hasNext()) {
+				Sender client = clients.next();
+				
+				if(client.getClientId().equals(id)) {
+					return client;
+				}
 			}
 		}
 		
@@ -245,6 +249,11 @@ public class ServerController extends Thread {
 		sendUserMessage("ERROR", senderId, message);
 	}
 	
+	public static void sendInfoMessage(String senderId, String message) {
+		
+		sendUserMessage("INFO", senderId, message);
+	}
+	
 	/**
 	 * Sends the given message to the client specified by
 	 * the receiverId.
@@ -267,14 +276,11 @@ public class ServerController extends Thread {
 	 */
 	public static void sendGroupMessage(String senderId, String groupName, String message) {
 		
-		Iterator<ArrayList<Sender>> grps = groups.values().iterator();
+		Iterator<Sender> groupMembers = getGroup(groupName).iterator();
 		
-		while(grps.hasNext()) {
-			Iterator<Sender> clients = grps.next().iterator();
+		while(groupMembers.hasNext()) {
 			
-			while(clients.hasNext()) {
-				sendUserMessage(senderId, clients.next().getClientId(), message);
-			}
+			sendUserMessage(senderId, groupMembers.next().getClientId(), message);
 		}
 	}
 	
@@ -353,6 +359,12 @@ public class ServerController extends Thread {
 	 */
 	public static synchronized void joinGroup(String clientId, String groupName) {
 		
+		//Remove from current group
+		if(getClientGroupName(clientId) != null) {
+			groups.get(getClientGroupName(clientId)).remove(getSenderById(clientId));
+		}
+		
+		//Add to new group
 		ArrayList<Sender> group = getGroup(groupName);
 		
 		if(group == null) { //If group doesn't exist, create it
@@ -360,13 +372,11 @@ public class ServerController extends Thread {
 		}
 		
 		getGroup(groupName).add(getSenderById(clientId));
+		sendUserMessage("SERVER", clientId, "Joining group: " + groupName);
 		updateOccupancy();
 	}
+
 	
-	//TODO getClientsIds should take a group name
-	//     to support getting clients in a specific
-	//     group. Getting all ids on the server will
-	//     just iterate over all groups.
 	/**
 	 * Returns and ArrayList containing the ids of all
 	 * clients currently connected.
@@ -412,18 +422,30 @@ public class ServerController extends Thread {
 	 * its socket.
 	 * 
 	 * @param clientId
+	 * @return True if the client was disconnected, false otherwise.
 	 */
-	public static void disconnect(String clientId) {
+	public static synchronized boolean disconnect(String clientId) {
 		
 		Sender sender = getSenderById(clientId);
 		
-		//Remove from group then remove from overall sender list
-		if(groups.get(getClientGroupName(clientId)).remove(sender)) {
-			senders.remove(sender);
-			sender.interrupt(); //Cause the sender to terminate
-			displayMessage("Disconnected user: " + clientId);
-			updateOccupancy();
+		if(sender != null) {
+			//Remove from group then remove from overall sender list
+			if(groups.get(getClientGroupName(clientId)).remove(sender)) {
+				senders.remove(sender);
+				sender.interrupt(); //Cause the sender to terminate
+				displayMessage("Disconnected user: " + clientId);
+				updateOccupancy();
+				
+				return true;
+			}
 		}
+		
+		return false;
+	}
+	
+	public static boolean kickClient(String clientId) {
+		
+		return disconnect(clientId);
 	}
 	
 	/**
