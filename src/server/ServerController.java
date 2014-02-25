@@ -15,6 +15,16 @@ import javax.swing.JTextArea;
 
 import utils.Utils;
 
+/**
+ * ServerController is a TCP chat server that
+ * listens for connections from chat clients
+ * and facilitates message sending between all
+ * active clients. Provides support for groups
+ * and various forms of message sending.
+ * 
+ * @author Eric Ostrowski, Austin Anderson, Alex Schuitema
+ *
+ */
 public class ServerController extends Thread {
 	
 	//Rules of engagement:
@@ -22,8 +32,8 @@ public class ServerController extends Thread {
 	//2. Server receives the id and determines if it is valid or not
 		//A. If not valid, the server will send to the client a zero indicating to the client to try again
 		//B. If it is valid, the server will send the client a one indicating to the client that it may proceed
-	//3. The server will immediately begin to listen for any string messages from the client
-	//4. The client may immediately begin sending string messages to the server
+	//3. The server will immediately begin to listen for any messages from the client
+	//4. The client may immediately begin sending messages to the server
 	//5. The server will continue to listen for more clients attempting to connect
 	
 	private static final int PORT = 9876;
@@ -34,6 +44,13 @@ public class ServerController extends Thread {
 	
 	private static ServerSocket listenSocket;
 	
+	
+	/**
+	 * Creates a ServerController with the specified UI
+	 * component as a diagnostics output log.
+	 * @param diagLog The log to which diagnostic information will
+	 * be output.
+	 */
 	public ServerController(JTextArea diagLog) {
 		
 		ServerController.diagLog = diagLog;
@@ -44,6 +61,12 @@ public class ServerController extends Thread {
 		createGroup("Lobby"); //Create the default group
 	}
 	
+	/*
+	 * Listens for and establishes connections with
+	 * clients who are attempting to connect.
+	 * (non-Javadoc)
+	 * @see java.lang.Thread#run()
+	 */
 	public void run() {
 		
 		//Ensure the controller can shutdown properly
@@ -204,6 +227,10 @@ public class ServerController extends Thread {
 		return null;
 	}
 	
+	/**
+	 * Returns true if a client with the specified id
+	 * exists, false otherwise.
+	 */
 	public static boolean clientExists(String id) {
 		
 		if(getSenderById(id) != null) {
@@ -393,6 +420,10 @@ public class ServerController extends Thread {
 		return ids;
 	}
 	
+	/**
+	 * Informs all connected clients of a an update
+	 * to group structures.
+	 */
 	public static void updateOccupancy() {
 		
 		//Group update message is as follows:
@@ -443,6 +474,11 @@ public class ServerController extends Thread {
 		return false;
 	}
 	
+	/**
+	 * Disconnects the specified user from the server.
+	 * @param clientId The user to be disconnected.
+	 * @return True if the user was able to be kicked, false otherwise.
+	 */
 	public static boolean kickClient(String clientId) {
 		
 		return disconnect(clientId);

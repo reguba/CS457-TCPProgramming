@@ -10,6 +10,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.text.DefaultCaret;
 
+/**
+ * ServerGui
+ * 
+ * User interface code for server.
+ * 
+ * @author Eric Ostrowski, Austin Anderson, Alex Schuitema
+ *
+ */
 public class ServerGui extends JFrame {
 
 	private static final long serialVersionUID = 1L;

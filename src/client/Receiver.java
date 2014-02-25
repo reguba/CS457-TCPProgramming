@@ -10,6 +10,14 @@ import java.util.StringTokenizer;
 
 import javax.swing.JTextArea;
 
+/**
+ * Receiver represents a thread on which
+ * all incoming data (server to client)
+ * is handled.
+ * 
+ * @author Eric Ostrowski, Austin Anderson, Alex Schuitema
+ *
+ */
 public class Receiver extends Thread {
 	
 	private InputStream inputStream;
@@ -40,6 +48,10 @@ public class Receiver extends Thread {
 		}
 	}
 	
+	/**
+	 * Parses and responds to the specified message.
+	 * @param message The message to parse.
+	 */
 	private void parseMessage(String message) {
 		
 		StringTokenizer tokenizer = new StringTokenizer(message, "\r\n ");
@@ -62,6 +74,11 @@ public class Receiver extends Thread {
 		}
 	}
 	
+	/**
+	 * Updates the group specified in the list of tokens
+	 * to contain the users listed in the tokens.
+	 * @param tokens The tokens representing the group update message.
+	 */
 	private void updateGroup(ArrayList<String> tokens) {
 		
 		ArrayList<String> users = new ArrayList<String>();
@@ -73,6 +90,11 @@ public class Receiver extends Thread {
 		ClientController.updateGroup(tokens.get(1), users);
 	}
 	
+	/**
+	 * Displays a message to the chat area associated
+	 * with this Receiver.
+	 * @param message
+	 */
 	private void displayChatMessage(String message) {
 		
 		chatArea.append(message + "\n");

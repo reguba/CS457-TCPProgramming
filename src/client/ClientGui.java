@@ -28,6 +28,14 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultCaret;
 
+/**
+ * ClientGui
+ * 
+ * User interface code for the client.
+ * 
+ * @author Eric Ostrowski, Austin Anderson, Alex Schuitema
+ *
+ */
 public class ClientGui extends JFrame {
 
 	private static final long serialVersionUID = 1L;
